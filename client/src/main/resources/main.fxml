@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<?import javafx.scene.control.PasswordField?>
+<VBox fx:id="rootNode" alignment="CENTER" prefHeight="400.0" prefWidth="400.0" style="-fx-background-color: linear-gradient(#fff 0%, #eee 10%, #ddd 90%, #bbb 100%);" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.172-ea" fx:controller="com.cloud.client.MainController">
+
+    <HBox fx:id="authPanel">
+        <TextField HBox.hgrow="ALWAYS" fx:id="loginField" promptText="Логин" />
+        <PasswordField HBox.hgrow="ALWAYS" fx:id="passField" promptText="Пароль" onAction="#sendAuth" />
+        <Button HBox.hgrow="ALWAYS" text="Подключиться" onAction="#sendAuth" />
+    </HBox>
+
+
+    <HBox fx:id="serverPanel">
+        <TextField fx:id="tfFileName" focusTraversable="false"
+                   promptText="Укажите имя файла на сервере, который хотите скачать"
+                   HBox.hgrow="ALWAYS"
+                   onAction="#pressOnDownloadBtn"
+        />
+
+        <Button onAction="#pressOnDownloadBtn" text="Скачать" />
+        <Button onAction="#refreshCloudFilesList" text="Обновить" />
+    </HBox>
+    <ListView fx:id="cloudFilesList" VBox.vgrow="ALWAYS" />
+
+    <HBox fx:id="clientPanel">
+        <TextField fx:id="uploadFileName" focusTraversable="false"
+                   promptText="Укажите имя файла, который хотите загрузить на сервер"
+                   HBox.hgrow="ALWAYS"
+                   onAction="#pressOnUploadBtn"
+        />
+        <Button onAction="#pressOnUploadBtn" text="Загрузить" />
+        <Button onAction="#refreshLocalFilesList" text="Обновить" />
+    </HBox>
+    <ListView fx:id="filesList" VBox.vgrow="ALWAYS" />
+
+    <!--<Button onAction="#pressOnSendData" text="Test Netty Send" />-->
+</VBox>
