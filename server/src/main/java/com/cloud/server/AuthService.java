@@ -1,5 +1,6 @@
 package com.cloud.server;
 
+import com.cloud.common.Command;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.sql.*;
@@ -9,7 +10,7 @@ public class AuthService {
     private static Statement stmt;
     private static PreparedStatement psSelect;
 
-    public Boolean checkAuthByLoginAndPassword(String login, String password) {
+    public String getPathByLoginAndPassword(String request) {
         try {
             dbconnect();
         } catch (Exception e) {
@@ -18,14 +19,16 @@ public class AuthService {
         ;
 
         try {
-            psSelect.setString(1, login);
-            psSelect.setString(2, password);
+            String[] params = request.split("\\s", 2);
+            psSelect.setString(1, params[0]);
+            psSelect.setString(2, params[1]);
             ResultSet rs = psSelect.executeQuery();
             if (rs.next()) {
-                return true;
+                return params[0];
+                        //new Command("AUTH_OK", params[0]);
             } else {
-                System.out.println("Нет такого пользователя"); //TODO: сделать тут человеческий вывод ошибки
-                return false;
+                return null;
+                        //new Command("AUTH_DENIED", null);
             }
         } catch (SQLException e) {
             e.printStackTrace();

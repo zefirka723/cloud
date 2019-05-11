@@ -34,15 +34,14 @@ public class MainController implements Initializable {
 
     private boolean isLogged = false;
 
-    public void showInterface (boolean isLogged) {
+    public void refreshInterface() {
         if (isLogged == true) {
             clientPanel.setVisible(true);
             serverPanel.setVisible(true);
             authPanel.setVisible(false);
             refreshLocalFilesList();
             refreshCloudFilesList();
-        }
-        else {
+        } else {
             authPanel.setVisible(true);
             clientPanel.setVisible(false);
             serverPanel.setVisible(false);
@@ -57,18 +56,28 @@ public class MainController implements Initializable {
             try {
                 while (true) {
                     AbstractMessage am = Network.readObject();
-                    if (am instanceof AuthResponse) {
-                        System.out.println("Мы получили ответ по авторизации");
-                        isLogged = ((AuthResponse) am).isLogged();
-                        System.out.println("isLogged = " +isLogged);
-                        showInterface(isLogged);
-                        System.out.println("тыц!");
-                        System.out.println(((AuthResponse) am).getMessage());
-                    }
                     if (am instanceof FileMessage) {
                         FileMessage fm = (FileMessage) am;
                         Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
                         refreshLocalFilesList();
+                    }
+                    if (am instanceof Command) {
+                        switch (((Command) am).getMsgType()) {
+                            case "AUTH_OK":
+                                isLogged = true;
+                                refreshInterface();
+                                break;
+                            case "AUTH_DENIED":
+                                // алерт об ошибке
+                                break;
+                            case "REFRESH_FILES_LIST":
+                                refreshCloudFilesList();
+                                break;
+                            case "DISCONNECTED":
+                                isLogged = false;
+                                refreshInterface();
+                                break;
+                        }
                     }
                 }
             } catch (ClassNotFoundException | IOException e) {
@@ -79,7 +88,7 @@ public class MainController implements Initializable {
         });
         t.setDaemon(true);
         t.start();
-        showInterface(isLogged);
+        refreshInterface();
     }
 
     public void pressOnDownloadBtn(ActionEvent actionEvent) {
@@ -97,7 +106,7 @@ public class MainController implements Initializable {
                 e.printStackTrace();
             }
             uploadFileName.clear();
-            refreshCloudFilesList();
+            //refreshCloudFilesList();
         }
     }
 
@@ -122,13 +131,11 @@ public class MainController implements Initializable {
     }
 
 
-
-
     public void refreshCloudFilesList() {
         if (Platform.isFxApplicationThread()) {
             try {
                 cloudFilesList.getItems().clear();
-                Files.list(Paths.get("server_storage")).map(p -> p.getFileName().toString()).forEach(o -> cloudFilesList.getItems().add(o));
+                Files.list(Paths.get("server_storage/login1/")).map(p -> p.getFileName().toString()).forEach(o -> cloudFilesList.getItems().add(o));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -136,7 +143,7 @@ public class MainController implements Initializable {
             Platform.runLater(() -> {
                 try {
                     cloudFilesList.getItems().clear();
-                    Files.list(Paths.get("server_storage")).map(p -> p.getFileName().toString()).forEach(o -> cloudFilesList.getItems().add(o));
+                    Files.list(Paths.get("server_storage/login1/")).map(p -> p.getFileName().toString()).forEach(o -> cloudFilesList.getItems().add(o));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -144,14 +151,16 @@ public class MainController implements Initializable {
         }
     }
 
-
-    public void sendAuth(){
+    public void sendAuth() {
         if (loginField.getLength() > 0 && passField.getLength() > 0) {
-            Network.sendMsg(new AuthRequest(loginField.getText(), passField.getText()));
+            Network.sendMsg(new Command("AUTH_REQUEST", loginField.getText()+ " " + passField.getText()));
         }
-//        isLogged = true; // ну ооооочень простая авторизация :D
-//        showInterface(isLogged);
-
     }
+
+    public void disconnect(){
+        Network.sendMsg(new Command("DISCONNECT"));
+    }
+
+
 }
 

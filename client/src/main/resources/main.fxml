@@ -36,6 +36,7 @@
         />
         <Button onAction="#pressOnUploadBtn" text="Загрузить" />
         <Button onAction="#refreshLocalFilesList" text="Обновить" />
+        <Button onAction="#disconnect" text="Выйти" />
     </HBox>
     <ListView fx:id="filesList" VBox.vgrow="ALWAYS" />
 
