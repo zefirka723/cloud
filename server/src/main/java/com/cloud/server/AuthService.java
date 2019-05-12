@@ -25,10 +25,8 @@ public class AuthService {
             ResultSet rs = psSelect.executeQuery();
             if (rs.next()) {
                 return params[0];
-                        //new Command("AUTH_OK", params[0]);
             } else {
                 return null;
-                        //new Command("AUTH_DENIED", null);
             }
         } catch (SQLException e) {
             e.printStackTrace();

@@ -10,13 +10,6 @@
 <?import javafx.scene.control.TableView?>
 <VBox fx:id="rootNode" alignment="CENTER" prefHeight="400.0" prefWidth="400.0" style="-fx-background-color: linear-gradient(#fff 0%, #eee 10%, #ddd 90%, #bbb 100%);" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.172-ea" fx:controller="com.cloud.client.MainController">
 
-    <HBox fx:id="authPanel">
-        <TextField HBox.hgrow="ALWAYS" fx:id="loginField" promptText="Логин" />
-        <PasswordField HBox.hgrow="ALWAYS" fx:id="passField" promptText="Пароль" onAction="#sendAuth" />
-        <Button HBox.hgrow="ALWAYS" text="Подключиться" onAction="#sendAuth" />
-    </HBox>
-
-
     <HBox fx:id="serverPanel">
         <TextField fx:id="tfFileName" focusTraversable="false"
                    promptText="Укажите имя файла на сервере, который хотите скачать"

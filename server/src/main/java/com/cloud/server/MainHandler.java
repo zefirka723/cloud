@@ -23,53 +23,52 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             }
             // запрос на скачивание файла из облака
             if (msg instanceof FileRequest) {
+                System.out.println("папка:" + clientPath);
                 FileRequest fr = (FileRequest) msg;
-                if (Files.exists(Paths.get("server_storage/" + clientPath + "/" + fr.getFilename()))) {
-                    FileMessage fm = new FileMessage(Paths.get("server_storage/" + clientPath + "/" + fr.getFilename()));
+                if (Files.exists(Paths.get(clientPath + fr.getFilename()))) {
+                    FileMessage fm = new FileMessage(Paths.get(clientPath + fr.getFilename()));
                     ctx.writeAndFlush(fm);
                 }
             }
+
             // загрузка файла в облако
             if (msg instanceof FileMessage) {
                 FileMessage fm = (FileMessage) msg;
-                Files.write(Paths.get("server_storage/" + clientPath + "/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+                Files.write(Paths.get(clientPath + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
                 refreshFilesList(ctx);
             }
+
             // команды
             if (msg instanceof Command) {
-                switch (((Command) msg).getMsgType()) {
-                    case "AUTH_REQUEST":
-                       clientPath = authService.getPathByLoginAndPassword(((Command) msg).getMsgText());
-                       ctx.writeAndFlush(new Command(clientPath == null ? "AUTH_DENIED" : "AUTH_OK"));
-                       if(clientPath != null) { refreshFilesList(ctx);  }
-                    break;
+                switch (((Command) msg).getCommandType()) {
+                    case AUTH_REQUEST:
+                        clientPath = "server_storage/" + authService.getPathByLoginAndPassword(((Command) msg).getMsgText()) + "/";
+                        ctx.writeAndFlush(new Command(
+                                clientPath == null ? Command.CommandType.AUTH_FAILED : Command.CommandType.AUTH_OK));
+                        if (clientPath != null) {
+                            refreshFilesList(ctx);
+                        }
+                        break;
 
-                    case "REFRESH_REQUEST":
+                    case CLOUD_FILES_REQUEST:
                         refreshFilesList(ctx);
                         break;
 
-                    case "DELETE_REQUEST":
+                    case DEL_FILE_REQUEST:
                         if (Files.exists(Paths.get(clientPath + ((Command) msg).getMsgText()))) {
                             Files.delete(Paths.get(clientPath + ((Command) msg).getMsgText()));
                             refreshFilesList(ctx);
                             break;
                         }
-                        System.out.println("Удаляемый файл не найден");
+                        ctx.writeAndFlush(new Command(Command.CommandType.DEL_FAILED));
                         break;
 
-                    case "DISCONNECT":
-                        ctx.writeAndFlush(new Command("DISCONNECTED"));
+                    case DISCONNECT:
+                        clientPath = null;
+                        ctx.writeAndFlush(new Command(Command.CommandType.DISCONNECTED));
+                        ctx.close(); //TODO check this out
                 }
             }
-
-            // авторизация
-//            if (msg instanceof AuthRequest) {
-//                if (authService.checkAuthByLoginAndPassword(((AuthRequest) msg).getLogin(), ((AuthRequest) msg).getPassword())) {
-//                    clientPath = "server_storage/" + ((AuthRequest) msg).getLogin();
-//                    AuthResponse authResponse = new AuthResponse(true, "success!"); //TODO это из ответа сервиса заполнять
-//                    ctx.writeAndFlush(authResponse);
-//                }
-//            }
 
         } finally {
             ReferenceCountUtil.release(msg);
@@ -85,7 +84,6 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
     // обновление списка файлов
     private void refreshFilesList(ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Command("REFRESH_FILES_LIST"));
+        ctx.writeAndFlush(new Command(Command.CommandType.CLOUD_FILES_LIST));
     }
-
 }

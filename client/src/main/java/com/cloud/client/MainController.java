@@ -2,12 +2,18 @@ package com.cloud.client;
 
 import com.cloud.common.*;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
@@ -32,19 +38,25 @@ public class MainController implements Initializable {
     @FXML
     HBox authPanel, clientPanel, serverPanel;
 
+    @FXML
+    VBox rootNode;
+
     private boolean isLogged = false;
 
-    public void refreshInterface() {
-        if (isLogged == true) {
-            clientPanel.setVisible(true);
-            serverPanel.setVisible(true);
-            authPanel.setVisible(false);
-            refreshLocalFilesList();
-            refreshCloudFilesList();
-        } else {
-            authPanel.setVisible(true);
-            clientPanel.setVisible(false);
-            serverPanel.setVisible(false);
+    public void changeScreenMode() {
+        Parent root;
+        try {
+            root = FXMLLoader.load(getClass().getResource(isLogged ? "/cloud.fxml" : "/login.fxml"));
+            Scene scene = new Scene(root);
+            if (Platform.isFxApplicationThread()) {
+                ((Stage) rootNode.getScene().getWindow()).setScene(scene);
+            } else {
+                Platform.runLater(() -> {
+                    ((Stage) rootNode.getScene().getWindow()).setScene(scene);
+                });
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -62,22 +74,28 @@ public class MainController implements Initializable {
                         refreshLocalFilesList();
                     }
                     if (am instanceof Command) {
-                        switch (((Command) am).getMsgType()) {
-                            case "AUTH_OK":
+                        switch (((Command) am).getCommandType()) {
+                            case AUTH_OK:
                                 isLogged = true;
-                                refreshInterface();
-                                break;
-                            case "AUTH_DENIED":
-                                // алерт об ошибке
-                                break;
-                            case "REFRESH_FILES_LIST":
-                                refreshCloudFilesList();
-                                break;
-                            case "DISCONNECTED":
-                                isLogged = false;
-                                refreshInterface();
+                                changeScreenMode();
                                 break;
                         }
+//                        switch (((Command) am).getMsgType()) {
+//                            case "AUTH_OK":
+//                                isLogged = true;
+//                                changeScreenMode();
+//                                break;
+//                            case "AUTH_DENIED":
+//                                // алерт об ошибке
+//                                break;
+//                            case "REFRESH_FILES_LIST":
+//                                refreshCloudFilesList();
+//                                break;
+//                            case "DISCONNECTED":
+//                                isLogged = false;
+//                                changeScreenMode();
+//                                break;
+//                        }
                     }
                 }
             } catch (ClassNotFoundException | IOException e) {
@@ -88,10 +106,11 @@ public class MainController implements Initializable {
         });
         t.setDaemon(true);
         t.start();
-        refreshInterface();
     }
 
     public void pressOnDownloadBtn(ActionEvent actionEvent) {
+        System.out.println("кнопка DOWNLOAD нажата");
+        System.out.println(tfFileName.getLength());
         if (tfFileName.getLength() > 0) {
             Network.sendMsg(new FileRequest(tfFileName.getText()));
             tfFileName.clear();
@@ -99,6 +118,7 @@ public class MainController implements Initializable {
     }
 
     public void pressOnUploadBtn(ActionEvent actionEvent) {
+        System.out.println("кнопка UPLOAD нажата");
         if (uploadFileName.getLength() > 0) {
             try {
                 Network.sendMsg(new FileMessage(Paths.get("client_storage/" + uploadFileName.getText())));
@@ -153,12 +173,15 @@ public class MainController implements Initializable {
 
     public void sendAuth() {
         if (loginField.getLength() > 0 && passField.getLength() > 0) {
-            Network.sendMsg(new Command("AUTH_REQUEST", loginField.getText()+ " " + passField.getText()));
+     //       Network.sendMsg(new Command("AUTH_REQUEST", loginField.getText() + " " + passField.getText()));
+            Network.sendMsg(new Command(Command.CommandType.AUTH_REQUEST, loginField.getText() + " " + passField.getText()));
         }
     }
 
-    public void disconnect(){
-        Network.sendMsg(new Command("DISCONNECT"));
+    public void disconnect() {
+        isLogged = false;
+        changeScreenMode();
+        //Network.sendMsg(new Command("DISCONNECT"));
     }
 
 

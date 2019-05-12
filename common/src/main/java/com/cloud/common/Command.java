@@ -2,32 +2,40 @@ package com.cloud.common;
 
 public class Command extends AbstractMessage {
 
-//    AUTH_REQUEST
-//    AUTH_OK;
-//    AUTH_DENIED;
-//    DISCONNECTED;
+    public enum CommandType {
+        AUTH_REQUEST,
+        AUTH_OK,
+        AUTH_FAILED,
 
-//    REFRESH_REQUEST;
-//    REFRESH_FILES_LIST;
+        DISCONNECT,
+        DISCONNECTED,
 
-    private String msgType;
-    private String msgText;
+        CLOUD_FILES_REQUEST,
+        CLOUD_FILES_LIST,
 
-    public Command (String msgType) {
-        this.msgType = msgType;
+        DEL_FILE_REQUEST,
+        DEL_FAILED
     }
 
-    public Command (String msgType, String msgText) {
-        this.msgType = msgType;
+    private CommandType commandType;
+    private String msgText;
+
+    public Command (CommandType commandType, String msgText) {
+        this.commandType = commandType;
         this.msgText = msgText;
     }
 
-    public String getMsgType() {
-        return msgType;
+    public Command (CommandType commandType) {
+        this.commandType = commandType;
     }
+
+
     public String getMsgText() {
         return msgText;
     }
 
+    public CommandType getCommandType() {
+        return commandType;
+    }
 
 }
